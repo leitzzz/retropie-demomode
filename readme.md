@@ -13,5 +13,6 @@ In retropie v4.8:
 edit /opt/retropie/configs/all/autostart.sh to have something like this:
 
 bash /home/pi/RetroPie/retropiemenu/demomode.sh
+
 emulationstation #auto
 
