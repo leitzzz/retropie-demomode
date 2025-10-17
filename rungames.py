@@ -11,6 +11,7 @@ import threading
 # import sys
 import time
 
+# used to enable debug logging to file
 DEBUG_MODE = False
 
 if DEBUG_MODE:
@@ -18,11 +19,16 @@ if DEBUG_MODE:
     logging.basicConfig(
         filename='/var/tmp/rungames_in_demomode.log', level=logging.INFO)
 
+# Exclusion rules for games that should not be included in demo mode.
+# These are regex patterns matched against the full path of each game.
 GAME_EXCLUSIONS = ['.*/gamelist.xml', '.*/genesis/.*', '.*/apple2/.*', '.*/bbcmicro/.*', '.*/cdimono1/.*', '.*/mame-advmame/.*', '.*/nds/*.dsv',
                    '.*/pc/pcdata/.*', '.*/vectrex/overlays/.*', '.*/psx/.bin', '.*/*/*.srm*', '.*/*/*.state*', '.*/snes/*.state', '.*/videopac/.*', '.*/ti99/.*']
 
 # this variable will hold the timeout value in seconds between each game execution in demo mode.
 INACTIVITY_TIMEOUT = 60
+
+# check every game in the folder path if it matches the exclusion rules
+# if it does not match any rule it will be included in the game list
 
 
 def filter_games(gamename):
@@ -33,8 +39,10 @@ def filter_games(gamename):
     return True
 
 
-# list of games to choose from
+# list of games to choose from, filtered by exclusion rules.
 GAME_LIST = list(filter(filter_games, glob('/home/pi/RetroPie/roms/*/*')))
+
+# pick a random game from the list
 
 
 def getRandomGame():
@@ -64,6 +72,7 @@ def inputAvailable(fds, timeout, exitPipeFd):
     return result
 
 
+# to prepare and read inputs from all event devices (using the file descriptors - fds)
 fds = [open(fn, 'rb') for fn in glob('/dev/input/event*')]
 
 
@@ -167,6 +176,7 @@ while 1:
     if DEBUG_MODE:
         logging.info('Starting game at ' +
                      str(game_start_time)+' with command: '+cmd)
+
     popenAndCall(on_exit, cmd, stdin=0, stdout=1, stderr=2,
                  shell=True)
 
