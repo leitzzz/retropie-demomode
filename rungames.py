@@ -188,4 +188,7 @@ while 1:
         logging.info('Killing game at '+str(time.time()))
 
     killgame(proc.pid)
-    time.sleep(5)
+
+    clearScreen()
+
+    time.sleep(3)
