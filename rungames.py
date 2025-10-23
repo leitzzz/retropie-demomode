@@ -22,10 +22,10 @@ if DEBUG_MODE:
 # Exclusion rules for games that should not be included in demo mode.
 # These are regex patterns matched against the full path of each game.
 GAME_EXCLUSIONS = ['.*/gamelist.xml', '.*/genesis/.*', '.*/apple2/.*', '.*/bbcmicro/.*', '.*/cdimono1/.*', '.*/mame-advmame/.*', '.*/nds/*.dsv',
-                   '.*/pc/pcdata/.*', '.*/vectrex/overlays/.*', '.*/psx/.bin', '.*/*/*.srm*', '.*/*/*.state*', '.*/snes/*.state', '.*/videopac/.*', '.*/ti99/.*']
+                   '.*/pc/pcdata/.*', '.*/vectrex/overlays/.*', '.*/psx/.bin', '.*/*/*.srm*', '.*/*/*.state*', '.*/snes/*.state', '.*/videopac/.*', '.*/ti99/.*', '.*/*/*.nv*']
 
 # this variable will hold the timeout value in seconds between each game execution in demo mode.
-INACTIVITY_TIMEOUT = 60
+INACTIVITY_TIMEOUT = 90
 
 # check every game in the folder path if it matches the exclusion rules
 # if it does not match any rule it will be included in the game list
