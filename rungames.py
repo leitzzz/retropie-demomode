@@ -8,7 +8,6 @@ import subprocess
 import re
 import signal
 import threading
-# import sys
 import time
 
 # used to enable debug logging to file
@@ -17,44 +16,52 @@ DEBUG_MODE = False
 if DEBUG_MODE:
     import logging
     logging.basicConfig(
-        filename='/var/tmp/rungames_in_demomode.log', level=logging.INFO)
+        filename='/var/tmp/rungames_in_demomode.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Exclusion rules for games that should not be included in demo mode.
-# These are regex patterns matched against the full path of each game.
-GAME_EXCLUSIONS = ['.*/gamelist.xml', '.*/genesis/.*', '.*/apple2/.*', '.*/bbcmicro/.*', '.*/cdimono1/.*', '.*/mame-advmame/.*', '.*/nds/*.dsv',
-                   '.*/pc/pcdata/.*', '.*/vectrex/overlays/.*', '.*/psx/.bin', '.*/*/*.srm*', '.*/*/*.state*', '.*/snes/*.state', '.*/videopac/.*', '.*/ti99/.*', '.*/*/*.nv*']
+# this variable holds the paths to search for games and the file extensions to include.
+# you can modify this dictionary to add or remove systems and their corresponding file types.
+GAMES_FOLDERS_PATHS = {'/home/pi/RetroPie/roms/snes': ['.zip', '.sfc', '.smc'],
+                       '/home/pi/RetroPie/roms/nes': ['.nes', '.zip'],
+                       '/home/pi/RetroPie/roms/megadrive': ['.md', '.bin', '.smd', '.zip'],
+                       '/home/pi/RetroPie/roms/arcade': ['.zip'],
+                       '/home/pi/RetroPie/roms/neogeo': ['.zip'], }
 
 # this variable will hold the timeout value in seconds between each game execution in demo mode.
-INACTIVITY_TIMEOUT = 90
+# settled to 5 minutes (300 seconds) by default. Adjust as needed.
+INACTIVITY_TIMEOUT = 300
 
-# check every game in the folder path if it matches the exclusion rules
-# if it does not match any rule it will be included in the game list
-
-
-def filter_games(gamename):
-    for rule in GAME_EXCLUSIONS:
-        if re.match(rule, gamename) is not None:
-            return False
-
-    return True
+# list of games to choose from, filtered by inclusion rules.
 
 
-# list of games to choose from, filtered by exclusion rules.
-GAME_LIST = list(filter(filter_games, glob('/home/pi/RetroPie/roms/*/*')))
+def get_game_list(games_paths):
+    """Returns a list of games that match the inclusion rules."""
+    glist = []
+    for path, extensions in games_paths.items():
+        for ext in extensions:
+            search_pattern = os.path.join(path, '*' + ext)
+            found_games = glob(search_pattern)
+            glist.extend(found_games)
+
+    if DEBUG_MODE:
+        logging.info(
+            f'Total games in list: {len(glist)}')
+
+    return glist
 
 # pick a random game from the list
 
 
-def getRandomGame():
-    global GAME_LIST
-    random.shuffle(GAME_LIST)
+def getRandomGame(glist):
+    """Returns a random game from the provided game list."""
+    selected_game = glist[random.randint(0, len(glist) - 1)]
     if DEBUG_MODE:
-        logging.info('Random game selected: ' + GAME_LIST[0])
+        logging.info('Random game selected: ' + selected_game)
 
-    return GAME_LIST[0]
+    return selected_game
 
 
 def inputAvailable(fds, timeout, exitPipeFd):
+    """Checks if there is input available on any of the provided file descriptors within the specified timeout."""
     global current_game
     # logging.info('Checking for input on: ' + str(fds) + ', exitFd= '+str(exitPipeFd))
     (rd, wr, sp) = select.select(fds, [], [], timeout)
@@ -77,6 +84,7 @@ fds = [open(fn, 'rb') for fn in glob('/dev/input/event*')]
 
 
 def killprocs(pid):
+    """Kills the process with the given PID."""
     try:
         os.kill(pid, signal.SIGTERM)
     except:
@@ -84,6 +92,7 @@ def killprocs(pid):
 
 
 def killgame(pid):
+    """Kills the game process and all its child processes."""
     subp = subprocess.Popen(
         'pstree '+str(pid)+' -p -a -l | cut -d, -f2 | cut -d\' \' -f1', stdout=subprocess.PIPE, shell=True)
     result = subp.communicate()[0].decode('utf8').split('\n')
@@ -118,6 +127,7 @@ def popenAndCall(onExit, *popenArgs, **popenKWArgs):
 
 
 def on_exit(code):
+    """Called when the game process exits."""
     global game_start_time
     global exitPipeWrite
     if DEBUG_MODE:
@@ -143,14 +153,16 @@ def on_exit(code):
 
 
 def purgueFd(fd):
+    """Clears any available input from the given file descriptor."""
     (rd, wr, sp) = select.select([fd], [], [], 0)
-    #  result = rd != []
+
     while (rd != []):
         rd[0].read(1)
         (rd, wr, sp) = select.select([fd], [], [], 0)
 
 
 def clearScreen():
+    """Clears the terminal screen."""
     os.system('clear')
 
 
@@ -162,12 +174,14 @@ fds.append(exitPipeRead)
 if DEBUG_MODE:
     logging.info('exitPipeRead: ' + str(exitPipeRead))
 
+# disable dialog command to avoid blocking the demo mode.
 os.system('alias dialog=:')
 
-while 1:
+while True:
     purgueFd(exitPipeRead)
     clearScreen()
-    gamefile = getRandomGame()
+    game_list = get_game_list(GAMES_FOLDERS_PATHS)
+    gamefile = getRandomGame(game_list)
     current_game = gamefile
     emulator = re.search('.*/([^/]+)/[^/]+', gamefile).group(1)
     cmd = '/opt/retropie/supplementary/runcommand/runcommand.sh 0 _SYS_ "' + \
@@ -191,4 +205,4 @@ while 1:
 
     clearScreen()
 
-    time.sleep(3)
+    time.sleep(2)
