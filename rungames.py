@@ -177,12 +177,22 @@ if DEBUG_MODE:
 # disable dialog command to avoid blocking the demo mode.
 os.system('alias dialog=:')
 
+# request the initial game list
+game_list = get_game_list(GAMES_FOLDERS_PATHS)
+
 while True:
     purgueFd(exitPipeRead)
     clearScreen()
-    game_list = get_game_list(GAMES_FOLDERS_PATHS)
+
+    # refresh game list if empty
+    if len(game_list) == 0:
+        game_list = get_game_list(GAMES_FOLDERS_PATHS)
+
     gamefile = getRandomGame(game_list)
     current_game = gamefile
+    # remove selected game from list to avoid repetition
+    game_list.remove(gamefile)
+
     emulator = re.search('.*/([^/]+)/[^/]+', gamefile).group(1)
     cmd = '/opt/retropie/supplementary/runcommand/runcommand.sh 0 _SYS_ "' + \
         emulator + '" "'+gamefile+'"'
