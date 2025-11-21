@@ -24,7 +24,8 @@ GAMES_FOLDERS_PATHS = {'/home/pi/RetroPie/roms/snes': ['.zip', '.sfc', '.smc'],
                        '/home/pi/RetroPie/roms/nes': ['.nes', '.zip'],
                        '/home/pi/RetroPie/roms/megadrive': ['.md', '.bin', '.smd', '.zip'],
                        '/home/pi/RetroPie/roms/arcade': ['.zip'],
-                       '/home/pi/RetroPie/roms/neogeo': ['.zip'], }
+                       '/home/pi/RetroPie/roms/neogeo': ['.zip'],
+                       '/home/pi/RetroPie/roms/mastersystem': ['.zip'], }
 
 # this variable will hold the timeout value in seconds between each game execution in demo mode.
 # settled to 5 minutes (300 seconds) by default. Adjust as needed.
